@@ -7,6 +7,7 @@ import UserProfile from '../components/UserProfile';
 function HomePage() {
   const navigate = useNavigate();
   const [showProfile, setShowProfile] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,6 +19,18 @@ function HomePage() {
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Simplified admin check based on root email
+        setIsAdmin(user.email === 'b123153@iiit-bh.ac.in');
+      }
+    };
+
+    checkAdminStatus();
   }, []);
 
   return (
@@ -60,14 +73,33 @@ function HomePage() {
             <nav className="flex items-center space-x-4">
               <a href="#" className="text-sm hover:text-white">Models</a>
               <a href="#" className="text-sm hover:text-white">Datasets</a>
+              {isAdmin && (
+                <>
+                  <Link 
+                    to="/upload-model" 
+                    className="text-sm text-purple-400 hover:text-purple-300 font-medium"
+                  >
+                    Upload Model
+                  </Link>
+                  <Link 
+                    to="/admin/dashboard" 
+                    className="text-sm text-purple-400 hover:text-purple-300 font-medium"
+                  >
+                    Admin Dashboard
+                  </Link>
+                </>
+              )}
               <a href="#" className="text-sm hover:text-white">Documentation</a>
             </nav>
             <div className="flex items-center space-x-3">
               <Bell className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
               <div className="relative" ref={profileRef}>
                 <button
-                  onClick={() => setShowProfile(!showProfile)}
-                  className="p-1.5 rounded-md hover:bg-gray-800 focus:outline-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowProfile(!showProfile);
+                  }}
+                  className="p-1.5 rounded-md hover:bg-gray-800 focus:outline-none cursor-pointer"
                 >
                   <User className="h-5 w-5 text-gray-400 hover:text-white" />
                 </button>

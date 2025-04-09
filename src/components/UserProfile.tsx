@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 interface Profile {
   email: string;
   created_at: string;
-  role?: string;
+  role?: 'admin' | 'user';
 }
 
 interface UserProfileProps {
@@ -32,19 +32,15 @@ function UserProfile({ onClose }: UserProfileProps) {
           .eq('id', user.id)
           .single();
 
-        // Check if user is admin
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-
+        // Simplified admin check
+        const isRootAdmin = user.email === 'b123153@iiit-bh.ac.in';
+        
         if (!profileError && profileData) {
           setProfile({
             ...profileData,
-            role: roleData?.role || 'user'
+            role: isRootAdmin ? 'admin' : 'user'
           });
-          setIsAdmin(roleData?.role === 'admin');
+          setIsAdmin(isRootAdmin);
         }
       }
     };
@@ -66,15 +62,25 @@ function UserProfile({ onClose }: UserProfileProps) {
     onClose();
   };
 
+  // Add click handler for the parent element
+  const handleParentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate('/profile');
+    onClose();
+  };
+
   if (!user || !profile) return null;
 
   return (
     <div className="absolute right-0 mt-2 w-80 bg-gray-900 rounded-lg shadow-xl py-2 border border-gray-800">
-      <div className="px-4 py-3 border-b border-gray-800">
+      <div 
+        className="px-4 py-3 border-b border-gray-800 cursor-pointer hover:bg-gray-800"
+        onClick={handleParentClick}
+      >
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-white">{profile.email}</p>
           {isAdmin && (
-            <span className="px-2 py-1 text-xs font-medium bg-purple-500/20 text-purple-400 rounded-full">
+            <span className="px-2 py-1 text-xs font-medium bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full">
               Admin
             </span>
           )}
@@ -92,12 +98,22 @@ function UserProfile({ onClose }: UserProfileProps) {
           View Profile
         </button>
         {isAdmin && (
-          <button
-            onClick={handleUploadModel}
-            className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 rounded-md"
-          >
-            Upload Model
-          </button>
+          <>
+            <Link
+              to="/upload-model"
+              className="w-full block text-left px-3 py-2 text-sm text-purple-400 hover:bg-gray-800 rounded-md"
+              onClick={onClose}
+            >
+              Upload Model
+            </Link>
+            <Link
+              to="/admin/dashboard"
+              className="w-full block text-left px-3 py-2 text-sm text-purple-400 hover:bg-gray-800 rounded-md"
+              onClick={onClose}
+            >
+              Admin Dashboard
+            </Link>
+          </>
         )}
         <button
           onClick={handleSignOut}

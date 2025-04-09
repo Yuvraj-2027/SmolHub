@@ -34,6 +34,47 @@ CREATE TABLE IF NOT EXISTS user_roles (
   UNIQUE(user_id)
 );
 
+-- Insert root admin user role
+INSERT INTO user_roles (user_id, role)
+SELECT id, 'admin'
+FROM profiles 
+WHERE email = 'b123153@iiit-bh.ac.in'
+ON CONFLICT (user_id) DO NOTHING;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can read own role" ON user_roles;
+DROP POLICY IF EXISTS "Allow inserting admin roles during signup" ON user_roles;
+DROP POLICY IF EXISTS "Admins can manage roles" ON user_roles;
+
+-- Enable RLS
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE models ENABLE ROW LEVEL SECURITY;
+
+-- New policies for user_roles
+CREATE POLICY "Anyone can insert roles"
+  ON user_roles
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Users can read own role"
+  ON user_roles
+  FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can manage roles"
+  ON user_roles
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id = auth.uid()
+      AND role = 'admin'
+    )
+  );
+
 -- Create models table
 CREATE TABLE IF NOT EXISTS models (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -47,17 +88,6 @@ CREATE TABLE IF NOT EXISTS models (
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
-
--- Enable RLS
-ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE models ENABLE ROW LEVEL SECURITY;
-
--- Policies for user_roles
-CREATE POLICY "Users can read own role"
-  ON user_roles
-  FOR SELECT
-  TO authenticated
-  USING (auth.uid() = user_id);
 
 -- Policies for models
 CREATE POLICY "Anyone can read models"

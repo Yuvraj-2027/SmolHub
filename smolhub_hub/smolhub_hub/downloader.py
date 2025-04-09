@@ -66,14 +66,6 @@ class SmolHubDownloader:
 def download_model(model_id: str, output_dir: str = "./", api_key: Optional[str] = None) -> str:
     """
     Convenience function to download a model from SmolHub.
-    
-    Args:
-        model_id: The unique identifier of the model (e.g., 'meta-llama/llama3.1')
-        output_dir: Directory to save the downloaded model
-        api_key: Optional API key for authentication
-        
-    Returns:
-        str: Path to the downloaded model file
     """
     downloader = SmolHubDownloader(api_key)
     return downloader.download_model(model_id, output_dir)

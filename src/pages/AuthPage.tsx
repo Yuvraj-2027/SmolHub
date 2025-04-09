@@ -5,7 +5,6 @@ import ConfirmationModal from '../components/ConfirmationModal';
 
 function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -60,15 +59,6 @@ function AuthPage() {
         });
         
         if (error) throw error;
-
-        if (user && isAdmin) {
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert([{ user_id: user.id, role: 'admin' }]);
-
-          if (roleError) throw roleError;
-        }
-        
         setShowConfirmation(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -82,7 +72,8 @@ function AuthPage() {
           }
           throw error;
         }
-        
+
+        // For immediate login redirect
         navigate('/');
       }
     } catch (err: any) {
@@ -99,34 +90,9 @@ function AuthPage() {
           <span className="text-yellow-400 text-3xl">🚀</span>
           <span className="ml-2 text-white text-2xl font-semibold">SmolHub</span>
         </div>
-        
-        <div className="flex justify-center space-x-4 mb-6">
-          <button
-            onClick={() => {
-              setIsAdmin(false);
-              setError('');
-            }}
-            className={`px-4 py-2 rounded-md transition-colors ${
-              !isAdmin ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300'
-            }`}
-          >
-            User
-          </button>
-          <button
-            onClick={() => {
-              setIsAdmin(true);
-              setError('');
-            }}
-            className={`px-4 py-2 rounded-md transition-colors ${
-              isAdmin ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300'
-            }`}
-          >
-            Admin
-          </button>
-        </div>
 
         <h2 className="text-2xl font-bold text-white mb-6 text-center">
-          {isSignUp ? 'Create an Account' : 'Sign In'} as {isAdmin ? 'Admin' : 'User'}
+          {isSignUp ? 'Create an Account' : 'Sign In'}
         </h2>
 
         {error && (
